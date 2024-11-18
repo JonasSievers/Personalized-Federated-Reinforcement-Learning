@@ -1,0 +1,11 @@
+torch
+torchvision
+torchaudio
+torchrl
+tensordict 
+tqdm
+numpy
+pandas
+wandb
+gymnasium
+hydra-core
