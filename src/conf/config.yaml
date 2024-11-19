@@ -4,7 +4,8 @@ datasets:
 env_params:
   init_charge: 0.0
   timeslots_per_day: 48
-  days: 365
+  forecast_horizon: 12
+  days: 731
   capacity: 13.5
   power_battery: 4.6
   ecoPriority: 0

@@ -1,3 +1,11 @@
+# Virtual Environment
 .venv
+
+# Pychache
 __pycache__
+
+# Hydra outputs
 outputs
+
+# Large CSV files
+/data/Final_Energy_dataset.csv

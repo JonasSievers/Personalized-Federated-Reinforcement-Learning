@@ -9,3 +9,4 @@ pandas
 wandb
 gymnasium
 hydra-core
+ipykernel

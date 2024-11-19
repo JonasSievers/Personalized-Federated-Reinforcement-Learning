@@ -8,6 +8,7 @@ class Datasets:
 class Env_Params:
     init_charge: float
     timeslots_per_day: int
+    forecast_horizon: int
     days: int
     capacity: float
     power_battery: float
