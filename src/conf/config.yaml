@@ -1,28 +1,37 @@
-datasets:
-  path: data/train.csv
+hydra:
+  run:
+    dir: ${experiment.path}/${experiment.name}
 
-env_params:
-  init_charge: 0.0
-  timeslots_per_day: 48
-  forecast_horizon: 12
-  days: 731
-  capacity: 13.5
-  power_battery: 4.6
-  ecoPriority: 0
-  logging: False
-  feed_in_price: 0.076
-
-params:
-  num_iterations: 40000
-  initial_collect_steps: 1000
-  collect_steps_per_iteration: 1
-  replay_buffer_capacity: 100000 
-  ou_stddev: 0.2
-  ou_damping: 0.15
-  target_update_tau: 0.05
-  target_update_period: 5
-  batch_size: 64
-  actor_learning_rate: 1e-4
-  critic_learning_rate: 1e-3
-  gamma: 0.99
-  reward_scale_factor: 1.0
+experiment:
+  path: outputs
+  name: abc
+  dataset_path: data/Final_Energy_dataset.csv
+  env_params:
+    customer: 1
+    timeslots_per_day: 48
+    train_days: 365
+    eval_days: 366
+    test_days: 365
+    forecast_horizon: 12
+    capacity: 13.5
+    power_battery: 4.6
+    init_charge: 0.0
+  params:
+    actor:
+      fc_layers: (400,300)
+      learning_rate: 1e-4
+      ou_theta: 0.15
+      ou_sigma: 0.2
+      ou_annealing_num_steps: 1000
+    critic:
+      obs_fc_layers: (400,)
+      joint_fc_layers: (300,)
+      learning_rate: 1e-3
+    num_iterations: 1000
+    data_collector_frames_per_batch: 100
+    replay_buffer_capacity: 1000
+    target_update_period: 5
+    target_update_tau: 0.001
+    td_gamma: 0.99
+    batch_size: 64
+    eval_period: 100

@@ -6,7 +6,6 @@ tensordict
 tqdm
 numpy
 pandas
-wandb
-gymnasium
 hydra-core
 ipykernel
+tensorboard

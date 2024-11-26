@@ -4,7 +4,7 @@
 # Pychache
 __pycache__
 
-# Hydra outputs
+# Hydra & Tensorboard outputs
 outputs
 
 # Large CSV files
