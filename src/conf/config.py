@@ -1,12 +1,15 @@
 from dataclasses import dataclass
+from typing import List
+
+
+@dataclass
+class Federated:
+    num_train_iterations: int
 
 @dataclass
 class Env_Params:
-    customer: int
+    customer: List[int]
     timeslots_per_day: int
-    train_days: int
-    eval_days: int
-    test_days: int
     forecast_horizon: int
     capacity: float
     power_battery: float
@@ -14,7 +17,7 @@ class Env_Params:
 
 @dataclass
 class Actor:
-    fc_layers: (int)
+    fc_layers: List[int]
     learning_rate: float
     ou_theta: float
     ou_sigma: float
@@ -22,8 +25,8 @@ class Actor:
 
 @dataclass
 class Critic:
-    obs_fc_layers: (int)
-    joint_fc_layers: (int)
+    obs_fc_layers: List[int]
+    joint_fc_layers: List[int]
     learning_rate: float
 
 @dataclass
@@ -44,6 +47,7 @@ class Experiment:
     path: str
     name: str
     dataset_path: str
+    federated: Federated
     env_params: Env_Params
     params: Params
 

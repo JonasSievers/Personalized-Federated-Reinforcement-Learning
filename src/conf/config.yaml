@@ -4,34 +4,33 @@ hydra:
 
 experiment:
   path: outputs
-  name: abc
+  name: ll_1
   dataset_path: data/Final_Energy_dataset.csv
+  federated:
+    update_after_iterations: 50
   env_params:
-    customer: 1
+    customer: [1,2,3]
     timeslots_per_day: 48
-    train_days: 365
-    eval_days: 366
-    test_days: 365
-    forecast_horizon: 12
+    forecast_horizon: 24
     capacity: 13.5
     power_battery: 4.6
     init_charge: 0.0
   params:
     actor:
-      fc_layers: (400,300)
+      fc_layers: [400,300]
       learning_rate: 1e-4
       ou_theta: 0.15
       ou_sigma: 0.2
       ou_annealing_num_steps: 1000
     critic:
-      obs_fc_layers: (400,)
-      joint_fc_layers: (300,)
+      obs_fc_layers: [400]
+      joint_fc_layers: [300]
       learning_rate: 1e-3
-    num_iterations: 1000
+    num_iterations: 2000
     data_collector_frames_per_batch: 100
-    replay_buffer_capacity: 1000
+    replay_buffer_capacity: 10000
     target_update_period: 5
     target_update_tau: 0.001
     td_gamma: 0.99
     batch_size: 64
-    eval_period: 100
+    eval_period: 1000

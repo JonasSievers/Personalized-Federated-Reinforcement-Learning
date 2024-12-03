@@ -9,3 +9,4 @@ pandas
 hydra-core
 ipykernel
 tensorboard
+matplotlib

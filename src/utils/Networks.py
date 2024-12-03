@@ -11,7 +11,7 @@ class CustomActorNet(nn.Module):
         self._action_low = action_spec.low
         self._action_high = action_spec.high
         self._fc_layers = fc_layers
-        self._layers = []
+        self._layers = nn.ModuleList()
 
         input_shape = self._input_shape
         for layer in self._fc_layers:
@@ -38,8 +38,8 @@ class CustomCriticNet(nn.Module):
         self._output_shape = 1
         self._obs_fc_layers = obs_fc_layers
         self._joint_fc_layers = joint_fc_layers
-        self._obs_layers = []
-        self._joint_layers = []
+        self._obs_layers = nn.ModuleList()
+        self._joint_layers = nn.ModuleList()
 
         input_shape = self._input_shape
         for layer in self._obs_fc_layers:
