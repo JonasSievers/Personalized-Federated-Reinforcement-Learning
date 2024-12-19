@@ -1,7 +1,6 @@
 import torch
 from torch.utils.data import Dataset
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
 
 class EnergyDataset(Dataset):
     def __init__(self, data_path: str, mode: str):
@@ -25,6 +24,9 @@ class EnergyDataset(Dataset):
     
     def __getitem__(self, idx):
         return None
+    
+    def getAll(self):
+        return self._data
 
     def getTensor(self, customer: int, idx_start: int, idx_end: int = None):
         if idx_end is None:

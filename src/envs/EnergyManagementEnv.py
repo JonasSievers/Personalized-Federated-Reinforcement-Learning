@@ -42,9 +42,9 @@ class EnergyManagementEnv(EnvBase):
 
     def _get_obs(self):
         return torch.cat((torch.tensor([self._soe, self._net_load], dtype=self._dtype), 
-                          self._net_load_forecast, 
-                          torch.tensor([self._electricity_price], dtype=self._dtype), 
-                          self._electricity_price_forecast), 0)
+                        self._net_load_forecast, 
+                        torch.tensor([self._electricity_price], dtype=self._dtype), 
+                        self._electricity_price_forecast), 0)
 
 
     def _reset(self, tensordict_in):
@@ -73,13 +73,14 @@ class EnergyManagementEnv(EnvBase):
 
         grid = self._net_load - p_battery
         grid_buy = grid if grid > 0.0 else 0.0
-        grid_sell = torch.abs(grid) if grid < 0.0 else 0.0
+        grid_sell = torch.abs(grid) if grid <= 0.0 else 0.0
 
         cost = grid_buy*self._electricity_price
         profit = grid_sell*self._electricity_price
         self._electricity_cost += profit - cost
 
-        reward = (profit - cost)*10 - penalty_soe *10
+
+        reward = ((profit - cost) - penalty_soe)*10
 
 
         if self._current_timestep >= self._max_timesteps:

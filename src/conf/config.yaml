@@ -4,14 +4,14 @@ hydra:
 
 experiment:
   path: outputs
-  name: ll_1
+  name: ll_22
   dataset_path: data/Final_Energy_dataset.csv
   federated:
     update_after_iterations: 50
   env_params:
-    customer: [1,2,3]
+    customer: [1]
     timeslots_per_day: 48
-    forecast_horizon: 24
+    forecast_horizon: 6
     capacity: 13.5
     power_battery: 4.6
     init_charge: 0.0
@@ -26,11 +26,11 @@ experiment:
       obs_fc_layers: [400]
       joint_fc_layers: [300]
       learning_rate: 1e-3
-    num_iterations: 2000
-    data_collector_frames_per_batch: 100
-    replay_buffer_capacity: 10000
-    target_update_period: 5
+    num_iterations: 5_000
+    data_collector_frames_per_batch: 50
+    replay_buffer_capacity: 20_000
+    target_update_period: 1
     target_update_tau: 0.001
     td_gamma: 0.99
     batch_size: 64
-    eval_period: 1000
+    eval_period: 10
