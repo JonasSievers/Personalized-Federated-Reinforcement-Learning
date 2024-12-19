@@ -1,0 +1,11 @@
+description: nn
+actor:
+  fc_layers: [400,300]
+  learning_rate: 1e-4
+  ou_theta: 0.15
+  ou_sigma: 0.2
+  ou_annealing_num_steps: 1000
+critic:
+  obs_fc_layers: [400]
+  joint_fc_layers: [300]
+  learning_rate: 1e-3

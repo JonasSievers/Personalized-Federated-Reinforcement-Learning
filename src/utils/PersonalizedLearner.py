@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 
-class FederatedLearner():
+class PersonalizedLearner():
     def __init__(self, customers: list, cfg: dict):
         self._customers = customers
         self._cfg = cfg

@@ -1,36 +1,31 @@
 hydra:
   run:
-    dir: ${experiment.path}/${experiment.name}
+    dir: ${output_path}/${name}
 
-experiment:
-  path: outputs
-  name: ll_22
-  dataset_path: data/Final_Energy_dataset.csv
-  federated:
-    update_after_iterations: 50
-  env_params:
-    customer: [1]
-    timeslots_per_day: 48
-    forecast_horizon: 6
-    capacity: 13.5
-    power_battery: 4.6
-    init_charge: 0.0
-  params:
-    actor:
-      fc_layers: [400,300]
-      learning_rate: 1e-4
-      ou_theta: 0.15
-      ou_sigma: 0.2
-      ou_annealing_num_steps: 1000
-    critic:
-      obs_fc_layers: [400]
-      joint_fc_layers: [300]
-      learning_rate: 1e-3
-    num_iterations: 5_000
-    data_collector_frames_per_batch: 50
-    replay_buffer_capacity: 20_000
-    target_update_period: 1
-    target_update_tau: 0.001
-    td_gamma: 0.99
-    batch_size: 64
-    eval_period: 10
+defaults:
+  - mode: local
+  - networks: nn
+  - _self_
+
+name: ll_22
+output_path: outputs
+dataset_path: data/Final_Energy_dataset.csv
+env:
+  customer: [1,2,3]
+  timeslots_per_day: 48
+  forecast_horizon: 6
+  capacity: 13.5
+  power_battery: 4.6
+  init_charge: 0.0
+ddpg:
+  data_collector_frames_per_batch: 50
+  data_collector_init_frames: 50
+  replay_buffer_capacity: 20_000
+  num_iterations: 100
+  train_iterations_per_frame: 32
+  target_update_period: 1
+  target_update_tau: 0.001
+  td_gamma: 0.99
+  batch_size: 64
+  eval_period: 250
+device: cpu

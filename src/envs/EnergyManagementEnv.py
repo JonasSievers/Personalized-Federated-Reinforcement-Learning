@@ -6,7 +6,7 @@ from tensordict import TensorDict, TensorDictBase
 from utils.EnergyDataset import EnergyDataset
 
 class EnergyManagementEnv(EnvBase):
-    def __init__(self, customer, dataset: EnergyDataset, cfg, device='cpu'):
+    def __init__(self, customer, dataset, cfg, device):
         self._dtype = torch.float32
         # Customer Setup
         self._customer = customer
