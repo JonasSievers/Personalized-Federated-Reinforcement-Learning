@@ -6,6 +6,7 @@ __pycache__
 
 # Hydra & Tensorboard outputs
 outputs
+multirun
 
 # Large CSV files
 /data/Final_Energy_dataset.csv

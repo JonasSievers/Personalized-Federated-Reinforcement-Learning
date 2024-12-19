@@ -67,6 +67,7 @@ class Local(Mode):
 @dataclass
 class Fed(Mode):
     description: str
+    num_iterations_local: int
 
 @dataclass
 class Per(Mode):

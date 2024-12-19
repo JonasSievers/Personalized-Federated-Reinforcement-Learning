@@ -22,7 +22,6 @@ class LocalLearner():
         self._agents = {}
         self._datasets = utils.createDatasets(self._cfg)
 
-
     def setup(self):
         self._observation_spec, self._action_spec = utils.createEnvSpecs(self._cfg)
 
@@ -61,7 +60,6 @@ class LocalLearner():
                                                  'collector': collector,
                                                  'buffer': buffer,
                                                  'envs': envs}
-            
 
     def train_eval_test(self):
         writer = SummaryWriter(log_dir=f"{self._cfg.output_path}/{self._cfg.name}/")
@@ -98,7 +96,7 @@ class LocalLearner():
                         for loss_name in ["loss_actor", "loss_value"]:
                             loss = loss_vals[loss_name]
                             optimiser = optimisers[loss_name]
-                            writer.add_scalar(f"{customer}/{loss_name}", loss, iteration*64+i)
+                            writer.add_scalar(f"{customer}/{loss_name}", loss, iteration*self._cfg.ddpg.train_iterations_per_frame+i)
                             loss.backward()
                             optimiser.step()
                             optimiser.zero_grad()
