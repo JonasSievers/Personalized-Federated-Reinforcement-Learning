@@ -5,6 +5,7 @@ import torch
 
 from utils.LocalLearner import LocalLearner
 from utils.FederatedLearner import FederatedLearner
+from utils.PersonalizedLearner import PersonalizedLearner
 
 cs = ConfigStore.instance()
 cs.store(name="hydra_config", node=HydraConfig)
@@ -29,8 +30,12 @@ def main(cfg: HydraConfig):
         fl = FederatedLearner(cfg=cfg, device=DEVICE)
         fl.setup()
         fl.train_eval_test()
+
     elif cfg.mode.description == 'personalized':
         print('Running Personalized Learner')
+        pfl = PersonalizedLearner(cfg=cfg, device=DEVICE)
+        pfl.setup()
+        pfl.train_eval_test()
 
 if __name__ == "__main__":
     main()

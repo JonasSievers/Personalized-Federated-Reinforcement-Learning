@@ -46,7 +46,6 @@ class EnergyManagementEnv(EnvBase):
                         torch.tensor([self._electricity_price], dtype=self._dtype), 
                         self._electricity_price_forecast), 0)
 
-
     def _reset(self, tensordict_in):
         self._current_timestep = 0
         self._electricity_price, self._net_load = self._dataset.getTensor(self._customer, self._current_timestep)
@@ -88,6 +87,11 @@ class EnergyManagementEnv(EnvBase):
 
         tensordict_out = TensorDict({'observation': self._get_obs(),
                                         'reward': reward,
-                                        'done': self._episode_ended},
+                                        'done': self._episode_ended, 
+                                        'price': self._electricity_price,
+                                        'net_load': self._net_load,
+                                        'action': action,
+                                        'timestep': self._current_timestep
+                                        },
                                     batch_size=self._batch_size)
         return tensordict_out

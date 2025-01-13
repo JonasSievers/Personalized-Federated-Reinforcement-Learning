@@ -15,7 +15,7 @@ def create_envs(customer, datasets, cfg, device):
     return [TransformedEnv(EnergyManagementEnv(customer=customer, dataset=dataset, cfg=cfg.env, device=device),InitTracker()) for dataset in datasets]
 
 def createDatasets(cfg):
-    return [EnergyDataset(data_path=cfg.dataset_path,mode=mode) for mode in ['test', 'eval', 'train']]
+    return [EnergyDataset(data_path=cfg.dataset_path,mode=mode) for mode in ['train', 'eval', 'test']]
 
 def createActorCritic(cfg):
     observation_spec, action_spec = createEnvSpecs(cfg)

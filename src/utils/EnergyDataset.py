@@ -6,18 +6,17 @@ class EnergyDataset(Dataset):
     def __init__(self, data_path: str, mode: str):
         csv_data = pd.read_csv(data_path, header=0)
         csv_data['Date'] = pd.to_datetime(csv_data['Date'])
-        csv_data = csv_data[csv_data['Date'].dt.date !=pd.to_datetime('2012-02-29').date()]
-        csv_price = pd.read_csv('../data/price.csv', header=0)
-        csv_data['price'] = csv_price['Price (EUR/MWhe)']
-        csv_data.drop(columns=['Date'], inplace=True)
-        csv_data.set_index(pd.RangeIndex(0,52560),inplace=True)
+        csv_data = csv_data[csv_data['Date'].dt.date !=pd.to_datetime('2012-02-29').date()].reset_index(drop=True)
+        csv_data['price'] = pd.read_csv("../data/price.csv", header=0) /100
+        #csv_data.drop(columns=['Date'], inplace=True)
+        #csv_data.set_index(pd.RangeIndex(0,52560),inplace=True)
         csv_data.fillna(0, inplace=True)
         if mode == 'train':
-            csv_data = csv_data.loc[0:17519]
+            csv_data = csv_data.loc[0:17519].reset_index(drop=True)
         elif mode == 'eval':
-            csv_data = (csv_data.loc[17520:35039]).set_index(pd.RangeIndex(0,17520))
+            csv_data = (csv_data.loc[17520:35039]).reset_index(drop=True)
         elif mode == 'test':
-            csv_data = (csv_data.loc[35040:52559]).set_index(pd.RangeIndex(0,17520))
+            csv_data = (csv_data.loc[35040:52559]).reset_index(drop=True)
         self._data = pd.DataFrame({
             f'net_load_{i+1}': csv_data[f'load_{i+1}'] - csv_data[f'pv_{i+1}'] 
             for i in range(300)})
