@@ -52,8 +52,6 @@ class Env:
     customer: List[int]
     timeslots_per_day: int
     forecast_horizon: int
-    capacity: float
-    power_battery: float
     init_charge: float
 
 @dataclass
@@ -77,7 +75,8 @@ class Per(Mode):
 class HydraConfig:
     name: str
     output_path: str
-    dataset_path: str
+    energy_dataset_path: str
+    price_dataset_path: str
     mode: Mode
     env: Env
     ddpg: Ddpg

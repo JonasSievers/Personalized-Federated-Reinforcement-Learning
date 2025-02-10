@@ -23,15 +23,17 @@ pip install -r requirements.txt
 
 ## Pipeline
 ```
-python main.py mode=local
+python src/main.py mode=local
 ```
 ```
-python main.py mode=fed
+python src/main.py mode=fed
 ```
 ```
-python main.py mode=per
+python src/main.py mode=per
 ```
 ```
-python main.py -m mode=local,fed,per
+python src/main.py -m mode=local,fed,per
 ```
-
+```
+tensorboard --logdir=outputs 
+```
