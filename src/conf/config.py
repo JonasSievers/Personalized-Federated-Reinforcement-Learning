@@ -40,11 +40,11 @@ class Ddpg:
     data_collector_frames_per_batch: int
     data_collector_init_frames: int
     replay_buffer_capacity: int
-    num_iterations: int
     train_iterations_per_frame: int
     target_update_tau: float
     td_gamma: float
     batch_size: int
+    num_iterations: int
     eval_period: int
 
 @dataclass
@@ -65,11 +65,13 @@ class Local(Mode):
 @dataclass
 class Fed(Mode):
     description: str
-    num_iterations_local: int
+    num_fed_rounds: int
 
 @dataclass
 class Per(Mode):
     description: str
+    num_fed_rounds: int
+    num_shared_layers: int
 
 @dataclass
 class HydraConfig:

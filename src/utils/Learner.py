@@ -15,20 +15,20 @@ class Learner():
         self._customers = cfg.env.customer
         self._device = device
         self._agents = {}
-        self._datasets = utils.createDatasets(self._cfg)
-        self._battery_spec = utils.calcBatteryCapacity(self._customers, self._datasets[0])
        
     def setup(self):
         for customer in self._customers:
-            self._observation_spec, self._action_spec = utils.createEnvSpecs(self._battery_spec[customer], self._cfg)
-            envs = utils.create_envs(customer, self._datasets, self._battery_spec[customer], self._cfg, self._device)
+            datasets = utils.createDatasets(cfg=self._cfg, customer=customer)
+            battery_cap = utils.calcBatteryCapacity(dataset=datasets[0])
+            observation_spec, action_spec = utils.createEnvSpecs(battery_cap, self._cfg)
+            envs = utils.create_envs(customer, datasets, battery_cap, (observation_spec.clone(), action_spec.clone()), self._cfg, self._device)    
 
             if self._cfg.networks.description=='nn':
-                actor_net = CustomActorNet(observation_spec=self._observation_spec.clone(),
-                                            action_spec= self._action_spec.clone(),
+                actor_net = CustomActorNet(observation_spec=observation_spec.clone(),
+                                            action_spec= action_spec.clone(),
                                             fc_layers=self._cfg.networks.actor.fc_layers)
-                critic_net = CustomCriticNet(observation_spec=self._observation_spec.clone(),
-                                                action_spec= self._action_spec.clone(),
+                critic_net = CustomCriticNet(observation_spec=observation_spec.clone(),
+                                                action_spec= action_spec.clone(),
                                                 obs_fc_layers=self._cfg.networks.critic.obs_fc_layers,
                                                 joint_fc_layers=self._cfg.networks.critic.joint_fc_layers)
 
@@ -49,7 +49,7 @@ class Learner():
                                                 annealing_num_steps=self._cfg.ddpg.num_iterations*self._cfg.ddpg.data_collector_frames_per_batch//2)
             exploration_policy_module = TensorDictSequential(policy_module, ou)
 
-            collector = SyncDataCollector(create_env_fn=(utils.create_envs(customer, [self._datasets[0]], self._battery_spec[customer], self._cfg, self._device)[0]),
+            collector = SyncDataCollector(create_env_fn=(utils.create_envs(customer, datasets, battery_cap, (observation_spec.clone(), action_spec.clone()), self._cfg, self._device)[0]),
                                           policy=exploration_policy_module, 
                                           frames_per_batch=self._cfg.ddpg.data_collector_frames_per_batch, 
                                           total_frames=self._cfg.ddpg.num_iterations*self._cfg.ddpg.data_collector_frames_per_batch,
@@ -69,6 +69,12 @@ class Learner():
 
     def loadAgent(self, customer):
         return self._agents[customer]['ddpg'], self._agents[customer]['target_updates'], self._agents[customer]['optimisers'], self._agents[customer]['collector'], self._agents[customer]['buffer'], self._agents[customer]['envs']
+
+    def save_eval(self,df, customer):
+        os.makedirs(self._output_path, exist_ok=True)
+        filename = f"{self._output_path}/building_{customer}_eval.csv"
+        df.to_csv(filename, index=False)
+        print(f"Evaluation results saved to {filename}")
 
     def save_results(self, df, customer):
         os.makedirs(self._output_path, exist_ok=True)

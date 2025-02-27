@@ -7,7 +7,7 @@ class CustomActorNet(nn.Module):
     def __init__(self, observation_spec, action_spec, fc_layers=(400,300)):
         super(CustomActorNet, self).__init__()
         self._input_shape = observation_spec["observation"].shape[0]
-        self._output_shape = action_spec.shape[0]
+        self._output_shape = action_spec.shape
         self._action_low = action_spec.low
         self._action_high = action_spec.high
         self._fc_layers = fc_layers
@@ -17,7 +17,7 @@ class CustomActorNet(nn.Module):
         for layer in self._fc_layers:
             self._layers.append(nn.Linear(input_shape, layer))
             input_shape = layer
-        self._final_layer = nn.Linear(input_shape, self._output_shape)
+        self._final_layer = nn.Linear(input_shape, 1)
 
     def forward(self, observation):
         x = observation

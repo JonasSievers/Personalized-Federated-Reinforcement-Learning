@@ -7,29 +7,26 @@ defaults:
   - networks: nn
   - _self_
 
-name: test
+name: test7
 output_path: outputs
-energy_dataset_path: data/Final_Energy_dataset.csv
-price_dataset_path: data/price.csv
+data:
+  energy_dataset_path: data/Final_Energy_dataset.csv
+  price_dataset_path: data/price.csv
+  
 env:
   customer: [1]
   timeslots_per_day: 48
-  forecast_horizon: 24
+  forecast_horizon: 48
   init_charge: 0.0
 ddpg:
   data_collector_frames_per_batch: 50 
   data_collector_init_frames: 50
   replay_buffer_capacity: 20_000
-  num_iterations: 2000
   train_iterations_per_frame: 32 
   target_update_period: 5
   target_update_tau: 0.001
   td_gamma: 0.99
   batch_size: 64
-  eval_period: 3000
-federated:
-  num_fed_rounds: 5
-  num_local_rounds: 2000
-personalized_fed:
-   num_shared_layers: 1
+  num_iterations: 4_000
+  eval_period: 100
 device: cpu

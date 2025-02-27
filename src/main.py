@@ -4,6 +4,7 @@ from conf.config import HydraConfig
 import torch
 
 from utils.LocalLearner import LocalLearner
+from utils.LocalLearnerDQN import LocalLearnerDQN
 from utils.FederatedLearner import FederatedLearner
 from utils.PersonalizedLearner import PersonalizedLearner
 
