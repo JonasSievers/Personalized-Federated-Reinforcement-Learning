@@ -40,11 +40,11 @@ class Ddpg:
     data_collector_frames_per_batch: int
     data_collector_init_frames: int
     replay_buffer_capacity: int
-    num_iterations: int
     train_iterations_per_frame: int
     target_update_tau: float
     td_gamma: float
     batch_size: int
+    num_iterations: int
     eval_period: int
 
 @dataclass
@@ -52,8 +52,6 @@ class Env:
     customer: List[int]
     timeslots_per_day: int
     forecast_horizon: int
-    capacity: float
-    power_battery: float
     init_charge: float
 
 @dataclass
@@ -67,17 +65,20 @@ class Local(Mode):
 @dataclass
 class Fed(Mode):
     description: str
-    num_iterations_local: int
+    num_fed_rounds: int
 
 @dataclass
 class Per(Mode):
     description: str
+    num_fed_rounds: int
+    num_shared_layers: int
 
 @dataclass
 class HydraConfig:
     name: str
     output_path: str
-    dataset_path: str
+    energy_dataset_path: str
+    price_dataset_path: str
     mode: Mode
     env: Env
     ddpg: Ddpg

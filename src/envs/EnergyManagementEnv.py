@@ -6,35 +6,24 @@ from tensordict import TensorDict, TensorDictBase
 from utils.EnergyDataset import EnergyDataset
 
 class EnergyManagementEnv(EnvBase):
-    def __init__(self, customer, dataset, cfg, device):
+    def __init__(self, customer, dataset, battery_cap, specs, cfg, device):
+        super().__init__(device=device, batch_size=torch.Size([]))
         self._dtype = torch.float32
-        # Customer Setup
         self._customer = customer
-
-        # Environment Setup
         self._current_timestep = 0
         self._episode_ended = False
         self._timeslots_per_day = cfg.timeslots_per_day
         self._forecast_horizon = cfg.forecast_horizon
         self._days = len(dataset)/self._timeslots_per_day
         self._max_timesteps = self._days * self._timeslots_per_day - self._forecast_horizon - 1
-        self._capacity = torch.tensor([cfg.capacity], dtype=self._dtype)
-        self._power_battery = torch.tensor([cfg.power_battery], dtype=self._dtype)
-        self._init_charge = torch.tensor([cfg.init_charge], dtype=self._dtype)
-        self._soe = torch.tensor([cfg.init_charge], dtype=self._dtype)
+        self._capacity = battery_cap
+        self._power_battery = battery_cap/2
+        self._soe = 0.0
         self._electricity_cost = 0.0
         self._batch_size = torch.Size([])
-        self._observation_shape = 2 * self._forecast_horizon + 3
-
-        super().__init__(device=device, batch_size=self._batch_size)
-
-        self.action_spec = Bounded(low=-self._power_battery/2, high=self._power_battery/2, shape=(1,), dtype=torch.float32)
-        self.observation_spec = Composite(observation=Unbounded(shape=(self._observation_shape,), dtype=torch.float32))
-
+        self.observation_spec = specs[0]
+        self.action_spec = specs[1]
         self._dataset = dataset
-    
-    def getElectricityCost(self):
-        return self._electricity_cost
     
     def _set_seed(self, seed):
         rng = torch.manual_seed(seed)
@@ -48,27 +37,34 @@ class EnergyManagementEnv(EnvBase):
 
     def _reset(self, tensordict_in):
         self._current_timestep = 0
-        self._electricity_price, self._net_load = self._dataset.getTensor(self._customer, self._current_timestep)
-        self._electricity_price_forecast, self._net_load_forecast = self._dataset.getTensor(self._customer, self._current_timestep+1, self._current_timestep+self._forecast_horizon)
-        self._soe = self._init_charge
+        net_load_data, electricity_price_data = self._dataset.__getitem__(self._current_timestep)
+        self._net_load = net_load_data[0]
+        self._net_load_forecast = net_load_data[1:]
+        self._electricity_price = electricity_price_data[0]
+        self._electricity_price_forecast = electricity_price_data[1:]
+        self._soe = torch.tensor([0.0], dtype=self._dtype)
         self._episode_ended =  torch.tensor(False, dtype=torch.bool)
         self._electricity_cost = 0.0
-        tensordict_out = TensorDict({'observation': self._get_obs()},
-                         batch_size=self._batch_size)
+        tensordict_out = TensorDict({'observation': self._get_obs(),
+                                        'done': self._episode_ended},
+                                    batch_size=self._batch_size)
         return tensordict_out
 
     def _step(self, tensordict_in):
-        action = tensordict_in['action']
+        action = tensordict_in['action'].detach()
         self._current_timestep += 1
 
         soe_old = self._soe
-        self._soe = torch.clip(soe_old + action, torch.Tensor([0.0]), self._capacity).detach()
-        penalty_soe  = torch.abs(action - (self._soe - soe_old)).detach()
+        self._soe = torch.clip(soe_old + action, 0.0, self._capacity)
+        penalty_soe  = torch.abs(action - (self._soe - soe_old))
 
         p_battery = soe_old - self._soe
 
-        self._electricity_price, self._net_load = self._dataset.getTensor(self._customer, self._current_timestep)
-        self._electricity_price_forecast, self._net_load_forecast = self._dataset.getTensor(self._customer, self._current_timestep+1, self._current_timestep+self._forecast_horizon)
+        net_load_data, electricity_price_data = self._dataset.__getitem__(self._current_timestep)
+        self._net_load = net_load_data[0]
+        self._net_load_forecast = net_load_data[1:]
+        self._electricity_price = electricity_price_data[0]
+        self._electricity_price_forecast = electricity_price_data[1:]
 
         grid = self._net_load - p_battery
         grid_buy = grid if grid > 0.0 else 0.0
@@ -78,20 +74,13 @@ class EnergyManagementEnv(EnvBase):
         profit = grid_sell*self._electricity_price
         self._electricity_cost += profit - cost
 
-
-        reward = ((profit - cost) - penalty_soe)*10
-
+        reward = (profit - cost) - penalty_soe
 
         if self._current_timestep >= self._max_timesteps:
             self._episode_ended = torch.tensor(True, dtype=torch.bool)
 
         tensordict_out = TensorDict({'observation': self._get_obs(),
                                         'reward': reward,
-                                        'done': self._episode_ended, 
-                                        'price': self._electricity_price,
-                                        'net_load': self._net_load,
-                                        'action': action,
-                                        'timestep': self._current_timestep
-                                        },
-                                    batch_size=self._batch_size)
+                                        'done': self._episode_ended,
+                                        'cost': self._electricity_cost})
         return tensordict_out
