@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 class EnergyDataset(Dataset):
-    def __init__(self, energy_path: str, price_path: str, forecast_size: int, customer: int, mode: str):
+    def __init__(self, energy_path: str, price_path: str, forecast_size: int, customer: int, mode: str, time_feature: bool):
         csv_data = pd.read_csv(energy_path, header=0)
         csv_data['Date'] = pd.to_datetime(csv_data['Date'])
         csv_data = csv_data[csv_data['Date'].dt.date !=pd.to_datetime('2012-02-29').date()].reset_index(drop=True)
@@ -18,7 +18,15 @@ class EnergyDataset(Dataset):
             csv_data = (csv_data.loc[35040:52559]).reset_index(drop=True)
         self._data = pd.DataFrame({'net_load': csv_data[f'load_{customer}'] - csv_data[f'pv_{customer}']})
         self._data['price'] = csv_data['price']
-        self._forecast_size = forecast_size
+        if time_feature:
+            dates = pd.to_datetime(csv_data['Date'])
+            fractional_hours = dates.dt.hour + dates.dt.minute / 60.0
+            hour_sin = np.sin(2 * np.pi * fractional_hours / 24)
+            hour_cos = np.cos(2 * np.pi * fractional_hours / 24)
+            self._data['hour_sin'] = hour_sin
+            self._data['hour_cos'] = hour_cos
+        self._forecast_size = forecast_size - 1
+        self._time_feature = time_feature
     
     def __len__(self):
         return len(self._data)-self._forecast_size
@@ -26,10 +34,18 @@ class EnergyDataset(Dataset):
     def __getitem__(self, idx):
         net_load = torch.tensor(self._data['net_load'].loc[idx:idx+self._forecast_size].values, dtype=torch.float32)
         price = torch.tensor(self._data['price'].loc[idx:idx+self._forecast_size].values, dtype=torch.float32)
+        if self._time_feature:
+            hour_sin = torch.tensor(self._data['hour_sin'].loc[idx:idx+self._forecast_size].values, dtype=torch.float32)
+            hour_cos = torch.tensor(self._data['hour_cos'].loc[idx:idx+self._forecast_size].values, dtype=torch.float32)
+            features = torch.stack([hour_sin, hour_cos], dim=1)
+            return net_load, price, features
         return net_load, price
     
     def getAllLoad(self):
         return torch.tensor(self._data['net_load'].values, dtype=torch.float32)
+    
+    def getAllPrice(self):
+        return torch.tensor(self._data['price'].values, dtype=torch.float32)
 
     # def getTensor(self, customer: int, idx_start: int = None, idx_end: int = None):
     #     if (idx_start is None) and (idx_end is None) :
