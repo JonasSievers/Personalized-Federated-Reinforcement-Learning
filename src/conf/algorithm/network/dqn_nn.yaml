@@ -1,0 +1,3 @@
+description: dqn_nn
+fc_layers: [400,300]
+learning_rate: 0.001

@@ -4,76 +4,73 @@ import torch
 import tqdm
 
 
-
 class LocalLearner(Learner):
     def __init__(self, cfg: dict, device: torch.device):
         super().__init__(cfg, device)
         
-    def train_eval_test(self):
+    def train(self):
+        eval_df = pd.DataFrame(columns=self._customers)
         for customer in self._customers:
+            eval = {}
             # Setup progress bar
-            pbar = tqdm.tqdm(total=self._cfg.ddpg.num_iterations, desc=f"Customer {customer}")
+            pbar = tqdm.tqdm(total=self._cfg.algorithm.num_iterations, desc=f"Customer {customer}")
 
             # Setup agent
-            loss_module, target_updates, optimisers, collector, buffer, envs = self.loadAgent(customer=customer)
+            loss_module, target_updates, optimiser, collector, buffer, envs = self._loadAgent(customer=customer)
             exploration_policy_module = collector.policy
 
-            # Setup evaluation dataframe
-            eval_df = []
             # Train
             for iteration, batch in enumerate(collector):
                 current_frames = batch.numel()
+                exploration_policy_module[-1].step(current_frames)
                 buffer.extend(batch)
-                # Start training after data_collector_init_frames
-                if iteration >= self._cfg.ddpg.data_collector_init_frames:
-                    # Train for train_iterations_per_frame iterations per frame
-                    for i in range(self._cfg.ddpg.train_iterations_per_frame):
-                        sample = buffer.sample()
-                        loss_vals = loss_module(sample)
-                        for loss_name in ["loss_actor", "loss_value"]:
-                            loss = loss_vals[loss_name]
-                            optimiser = optimisers[loss_name]
-                            loss.backward()
+
+                # Train for train_iterations_per_frame iterations per frame
+                for i in range(self._cfg.algorithm.train_iterations_per_frame):
+                    sample = buffer.sample()
+                    match self._algorithm:
+                        case 'ddpg':
+                            loss_vals = loss_module(sample)
+                            for loss_name in ["loss_actor", "loss_value"]:
+                                loss = loss_vals[loss_name]
+                                loss.backward()
+                                optimiser = optimiser[loss_name]
+                                optimiser.step()
+                                optimiser.zero_grad()
+                        case 'dqn':
+                            loss = loss_module(sample)
+                            loss['loss'].backward()
                             optimiser.step()
                             optimiser.zero_grad()
-                        target_updates.step()
-                exploration_policy_module[-1].step(current_frames)
-                pbar.update(current_frames/self._cfg.ddpg.data_collector_frames_per_batch)
+                    if (iteration+i) % self._cfg.algorithm.target_update_period == 0:
+                            target_updates.step()
 
-                # Evaluate every eval_period iterations
-                if iteration % self._cfg.ddpg.eval_period == 0:
-                    eval_env = envs[1]
-                    obs = eval_env.reset()
-                    done = torch.tensor(False)
-                    while(done == torch.tensor(False)):
-                        action = loss_module.actor_network(obs)
-                        obs = eval_env.step(action)['next']
-                        done = obs['done']
-                    eval_df.append({customer: obs['cost'].item()})    
-            # Save evaluation results
-            df = pd.DataFrame(eval_df)
-            self.save_eval(df=df, customer=customer)
+                # Update train progress bar
+                pbar.update(current_frames/self._cfg.algorithm.data_collector_frames_per_batch)
             
-            # Testing
-            test_env = envs[2]
-            obs = test_env.reset()
-            done = torch.tensor(False)
-            data_list = []
-            while(done == torch.tensor(False)):
-                action = loss_module.actor_network(obs)
-                data_list.append({
-                    'soe': obs['observation'][0].item(),
-                    'net_load': obs['observation'][1].item(),
-                    'price': obs['observation'][50].item(),
-                    'action': action['action'].item()
-                })
-                obs = test_env.step(action)['next']
-                done = obs['done']
+                # Evaluate every eval_period iterations
+                if (iteration+1) % self._cfg.algorithm.eval_period == 0:
+                    eval_env = envs[2]
+                    eval_env.reset()
+                    match self._algorithm:
+                        case 'ddpg':
+                            tensordict_result = eval_env.rollout(max_steps=eval_env.get_max_timesteps(), policy=loss_module.actor_network)
+                        case 'dqn':
+                            tensordict_result = eval_env.rollout(max_steps=eval_env.get_max_timesteps(), policy=loss_module.value_network)
+                    final_cost = tensordict_result[-1]['next']['cost']
+                    eval[iteration+1] = final_cost.item()
 
-            # Create DataFrame and add calculated columns
-            df = pd.DataFrame(data_list)
-            df['time'] = df.index
-            df['total_load'] = df['net_load'] + df['action']
-            df['cost'] = df['price'] * df['total_load']
-            df['total_cost'] = df['cost'].cumsum()
-            self.save_results(df, customer)
+            # Save evaluation metrics
+            eval_df[customer] = eval
+
+            # Save the model
+            match self._algorithm:
+                case 'ddpg':
+                    model_path = f"{self._cfg.model_path}/actor_network_{customer}.pt"
+                    torch.save(loss_module.actor_network.state_dict(), model_path)
+                case 'dqn':
+                    model_path = f"{self._cfg.model_path}/value_network_{customer}.pt"
+                    torch.save(loss_module.value_network.state_dict(), model_path)
+        
+        # Save evaluation DataFrame to CSV
+        eval_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/eval_metrics.csv", index=False)

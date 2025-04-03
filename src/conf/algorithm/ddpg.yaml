@@ -1,0 +1,17 @@
+defaults:
+  - network: ddpg_nn
+  - _self_
+description: ddpg
+num_iterations: 1_000
+eval_period: 50
+batch_size: 32
+td_gamma: 0.99
+target_update_period: 5
+target_update_tau: 0.001
+ou_theta: 0.15
+ou_sigma: 0.2
+ou_annealing_num_steps: 1000
+data_collector_frames_per_batch: 50
+replay_buffer_capacity: 20_000
+train_iterations_per_frame: 32 
+

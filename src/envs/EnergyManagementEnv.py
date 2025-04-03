@@ -29,6 +29,9 @@ class EnergyManagementEnv(EnvBase):
         rng = torch.manual_seed(seed)
         self.rng = rng
 
+    def get_max_timesteps(self):
+        return int(self._max_timesteps)
+
     def _get_obs(self):
         return torch.cat((torch.tensor([self._soe, self._net_load], dtype=self._dtype), 
                         self._net_load_forecast, 
@@ -46,7 +49,8 @@ class EnergyManagementEnv(EnvBase):
         self._episode_ended =  torch.tensor(False, dtype=torch.bool)
         self._electricity_cost = 0.0
         tensordict_out = TensorDict({'observation': self._get_obs(),
-                                        'done': self._episode_ended},
+                                        'done': self._episode_ended,
+                                        'cost': self._electricity_cost},
                                     batch_size=self._batch_size)
         return tensordict_out
 
