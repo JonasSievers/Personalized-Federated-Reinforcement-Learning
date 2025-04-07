@@ -50,7 +50,7 @@ class LocalLearner(Learner):
             
                 # Evaluate every eval_period iterations
                 if (iteration+1) % self._cfg.algorithm.eval_period == 0:
-                    eval_env = envs[2]
+                    eval_env = envs[1]
                     eval_env.reset()
                     match self._algorithm:
                         case 'ddpg':
@@ -66,11 +66,50 @@ class LocalLearner(Learner):
             # Save the model
             match self._algorithm:
                 case 'ddpg':
-                    model_path = f"{self._cfg.model_path}/actor_network_{customer}.pt"
+                    model_path = f"{self._cfg.model_path}/{self._cfg.name}/actor_network_{customer}.pt"
                     torch.save(loss_module.actor_network.state_dict(), model_path)
                 case 'dqn':
-                    model_path = f"{self._cfg.model_path}/value_network_{customer}.pt"
+                    model_path = f"{self._cfg.model_path}/{self._cfg.name}/value_network_{customer}.pt"
                     torch.save(loss_module.value_network.state_dict(), model_path)
         
         # Save evaluation DataFrame to CSV
         eval_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/eval_metrics.csv", index=False)
+
+    def test(self):
+        actions_agg = {}
+        final_cost_agg = {}
+        actions_forecast_agg = {}
+        final_cost_forecast_agg = {}
+        for customer in self._customers:
+            loss_module, target_updates, optimiser, collector, buffer, envs = self._loadAgent(customer=customer)
+            test_env = envs[2]
+            test_env.reset()
+            match self._algorithm:
+                case 'ddpg':
+                    tensordict_result = test_env.rollout(max_steps=test_env.get_max_timesteps(), policy=loss_module.actor_network)
+                case 'dqn':
+                    tensordict_result = test_env.rollout(max_steps=test_env.get_max_timesteps(), policy=loss_module.value_network)
+            actions = tensordict_result[:]['next']['action_float']
+            final_cost = tensordict_result[-1]['next']['cost']
+            actions_agg[customer] = actions
+            final_cost_agg[customer] = final_cost
+            forecast_env = envs[3]
+            forecast_env.reset()
+            match self._algorithm:
+                case 'ddpg':
+                    tensordict_result = test_env.rollout(max_steps=forecast_env.get_max_timesteps(), policy=loss_module.actor_network)
+                case 'dqn':
+                    tensordict_result = test_env.rollout(max_steps=forecast_env.get_max_timesteps(), policy=loss_module.value_network)
+            actions_forecast = tensordict_result[:]['next']['action_float']
+            final_cost_forecast = tensordict_result[-1]['next']['cost']
+            actions_forecast_agg[customer] = actions_forecast
+            final_cost_forecast_agg[customer] = final_cost_forecast
+
+        actions_df = pd.DataFrame(actions_agg)
+        actions_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/actions.csv", index=False)
+        final_cost_df = pd.DataFrame(final_cost_agg)
+        final_cost_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/final_cost.csv", index=False)
+        actions_forecast_df = pd.DataFrame(actions_forecast_agg)
+        actions_forecast_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/actions_forecast.csv", index=False)
+        final_cost_forecast_df = pd.DataFrame(final_cost_forecast_agg)
+        final_cost_forecast_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/final_cost_forecast.csv", index=False)

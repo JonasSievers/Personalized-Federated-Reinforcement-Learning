@@ -7,6 +7,7 @@ class EnergyDataset(Dataset):
     def __init__(self, energy_path: str, price_path: str, forecast_size: int, customer: int, mode: str, time_feature: bool):
         csv_data = pd.read_csv(energy_path, header=0)
         csv_data['Date'] = pd.to_datetime(csv_data['Date'])
+        # Delete the 29th of February 2012
         csv_data = csv_data[csv_data['Date'].dt.date !=pd.to_datetime('2012-02-29').date()].reset_index(drop=True)
         csv_data['price'] = pd.read_csv(price_path, header=0) /100
         csv_data.fillna(0, inplace=True)
@@ -25,7 +26,7 @@ class EnergyDataset(Dataset):
             hour_cos = np.cos(2 * np.pi * fractional_hours / 24)
             self._data['hour_sin'] = hour_sin
             self._data['hour_cos'] = hour_cos
-        self._forecast_size = forecast_size - 1
+        self._forecast_size = forecast_size
         self._time_feature = time_feature
     
     def __len__(self):

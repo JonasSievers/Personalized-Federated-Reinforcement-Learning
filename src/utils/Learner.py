@@ -1,13 +1,12 @@
-import pandas as pd
-import tqdm
 from utils.Networks import CustomActorNet, CustomCriticNet
 import utils.utils as utils
+
 import torch
+from torch.optim import Adam
+from tensordict.nn import TensorDictModule, TensorDictSequential
 from torchrl.modules import MLP, EGreedyModule, QValueModule, Actor,OrnsteinUhlenbeckProcessModule
 from torchrl.objectives import DQNLoss, ValueEstimators, SoftUpdate, DDPGLoss
-from tensordict.nn import TensorDictModule, TensorDictSequential
 from torchrl.collectors import SyncDataCollector
-from torch.optim import Adam
 from torchrl.data import LazyMemmapStorage, ReplayBuffer, RandomSampler
 
 class Learner():
@@ -117,3 +116,6 @@ class Learner():
     
     def train(self):
         pass
+
+    def test(self):
+        pass    

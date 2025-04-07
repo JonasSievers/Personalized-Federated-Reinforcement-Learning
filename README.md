@@ -34,6 +34,3 @@ python src/main.py mode=per
 ```
 python src/main.py -m mode=local,fed,per
 ```
-```
-tensorboard --logdir=outputs 
-```

@@ -2,12 +2,13 @@ from torchrl.data import Bounded, Unbounded, Composite, Categorical
 from torchrl.envs.transforms import TransformedEnv, InitTracker, ActionDiscretizer, Compose
 import torch
 from envs.EnergyManagementEnv import EnergyManagementEnv
+from utils.EnergyForecastDataset import EnergyForecastDataset
 from utils.EnergyDataset import EnergyDataset
 
 
 def createEnvSpecs(battery_cap, cfg):
     battery_power = battery_cap/2
-    observation_spec = Composite(observation=Unbounded(shape=(2 * cfg.env.forecast_horizon + 1,), dtype=torch.float32))
+    observation_spec = Composite(observation=Unbounded(shape=(2 * (cfg.env.forecast_horizon+1) + 1,), dtype=torch.float32))
     action_spec = Bounded(low=-battery_power/2, high=battery_power/2, shape=(), dtype=torch.float32)
     return observation_spec, action_spec
 
@@ -19,19 +20,26 @@ def create_envs(customer, datasets, battery_cap, specs, cfg, device):
                                                    specs=specs, cfg=cfg.env, 
                                                    device=device),
                             transform=Compose(InitTracker(),
-                                              ActionDiscretizer(num_intervals=20,
+                                              ActionDiscretizer(num_intervals=cfg.algorithm.num_intervals_discretized,
                                                                 action_key = 'action', 
                                                                 categorical=True, 
-                                                                sampling=ActionDiscretizer.SamplingStrategy.MEDIAN)))
-            for dataset in datasets]
+                                                                sampling=ActionDiscretizer.SamplingStrategy.MEDIAN))) for dataset in datasets]
 
 def createDatasets(cfg, customer):
-    return [EnergyDataset(energy_path=cfg.data.energy_dataset_path, 
+    ds_arr = [EnergyDataset(energy_path=cfg.data.energy_dataset_path, 
                           price_path=cfg.data.price_dataset_path, 
                           forecast_size=cfg.env.forecast_horizon,
                           customer=customer, 
                           mode=mode, 
                           time_feature=False) for mode in ['train', 'eval', 'test']]
+    forecast_ds = EnergyForecastDataset(energy_path=cfg.data.energy_dataset_path,
+                                        price_path=cfg.data.price_dataset_path, 
+                                        forecast_size=cfg.env.forecast_horizon,
+                                        customer=customer, 
+                                        mode='test', 
+                                        time_feature=True)
+    ds_arr.append(forecast_ds)
+    return ds_arr
 
 def calcBatteryCapacity(dataset):
     net_load = dataset.getAllLoad()

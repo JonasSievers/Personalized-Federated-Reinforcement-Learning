@@ -12,6 +12,7 @@ class EnergyManagementEnv(EnvBase):
         self._customer = customer
         self._current_timestep = 0
         self._episode_ended = False
+        self._cfg = cfg
         self._timeslots_per_day = cfg.timeslots_per_day
         self._forecast_horizon = cfg.forecast_horizon
         self._days = len(dataset)/self._timeslots_per_day
@@ -86,5 +87,6 @@ class EnergyManagementEnv(EnvBase):
         tensordict_out = TensorDict({'observation': self._get_obs(),
                                         'reward': reward,
                                         'done': self._episode_ended,
-                                        'cost': self._electricity_cost})
+                                        'cost': self._electricity_cost,
+                                        'action_float': action})
         return tensordict_out

@@ -85,6 +85,7 @@ class HydraConfig:
     model_path: str
     energy_dataset_path: str
     price_dataset_path: str
+    use_forecast: bool
     mode: Mode
     env: Env
     algorithm: Algorithm

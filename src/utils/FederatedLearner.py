@@ -7,8 +7,6 @@ from torchrl.modules import Actor, OrnsteinUhlenbeckProcessModule
 from torchrl.data.replay_buffers import LazyMemmapStorage, ReplayBuffer, RandomSampler
 from torchrl.collectors import SyncDataCollector
 from tensordict.nn import TensorDictModule, TensorDictSequential
-from itertools import islice
-from torch.utils.tensorboard import SummaryWriter
 import os
 import yaml
 import omegaconf

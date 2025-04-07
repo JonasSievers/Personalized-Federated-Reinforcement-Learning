@@ -5,7 +5,7 @@
 __pycache__
 
 # Hydra & Tensorboard outputs
-outputs
+# outputs
 multirun
 
 # Large CSV files
