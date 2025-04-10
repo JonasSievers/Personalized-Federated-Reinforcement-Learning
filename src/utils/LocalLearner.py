@@ -93,23 +93,25 @@ class LocalLearner(Learner):
             final_cost = tensordict_result[-1]['next']['cost']
             actions_agg[customer] = actions
             final_cost_agg[customer] = final_cost
-            forecast_env = envs[3]
-            forecast_env.reset()
-            match self._algorithm:
-                case 'ddpg':
-                    tensordict_result = test_env.rollout(max_steps=forecast_env.get_max_timesteps(), policy=loss_module.actor_network)
-                case 'dqn':
-                    tensordict_result = test_env.rollout(max_steps=forecast_env.get_max_timesteps(), policy=loss_module.value_network)
-            actions_forecast = tensordict_result[:]['next']['action_float']
-            final_cost_forecast = tensordict_result[-1]['next']['cost']
-            actions_forecast_agg[customer] = actions_forecast
-            final_cost_forecast_agg[customer] = final_cost_forecast
+            if self._cfg.use_forecast == True:
+                forecast_env = envs[3]
+                forecast_env.reset()
+                match self._algorithm:
+                    case 'ddpg':
+                        tensordict_result = test_env.rollout(max_steps=forecast_env.get_max_timesteps(), policy=loss_module.actor_network)
+                    case 'dqn':
+                        tensordict_result = test_env.rollout(max_steps=forecast_env.get_max_timesteps(), policy=loss_module.value_network)
+                actions_forecast = tensordict_result[:]['next']['action_float']
+                final_cost_forecast = tensordict_result[-1]['next']['cost']
+                actions_forecast_agg[customer] = actions_forecast
+                final_cost_forecast_agg[customer] = final_cost_forecast
 
         actions_df = pd.DataFrame(actions_agg)
         actions_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/actions.csv", index=False)
         final_cost_df = pd.DataFrame(final_cost_agg)
         final_cost_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/final_cost.csv", index=False)
-        actions_forecast_df = pd.DataFrame(actions_forecast_agg)
-        actions_forecast_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/actions_forecast.csv", index=False)
-        final_cost_forecast_df = pd.DataFrame(final_cost_forecast_agg)
-        final_cost_forecast_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/final_cost_forecast.csv", index=False)
+        if self._cfg.use_forecast == True:
+            actions_forecast_df = pd.DataFrame(actions_forecast_agg)
+            actions_forecast_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/actions_forecast.csv", index=False)
+            final_cost_forecast_df = pd.DataFrame(final_cost_forecast_agg)
+            final_cost_forecast_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/final_cost_forecast.csv", index=False)

@@ -32,13 +32,14 @@ def createDatasets(cfg, customer):
                           customer=customer, 
                           mode=mode, 
                           time_feature=False) for mode in ['train', 'eval', 'test']]
-    forecast_ds = EnergyForecastDataset(energy_path=cfg.data.energy_dataset_path,
-                                        price_path=cfg.data.price_dataset_path, 
-                                        forecast_size=cfg.env.forecast_horizon,
-                                        customer=customer, 
-                                        mode='test', 
-                                        time_feature=True)
-    ds_arr.append(forecast_ds)
+    if cfg.use_forecast == True:
+        forecast_ds = EnergyForecastDataset(energy_path=cfg.data.energy_dataset_path,
+                                            price_path=cfg.data.price_dataset_path, 
+                                            forecast_size=cfg.env.forecast_horizon,
+                                            customer=customer, 
+                                            mode='test', 
+                                            time_feature=True)
+        ds_arr.append(forecast_ds)
     return ds_arr
 
 def calcBatteryCapacity(dataset):
