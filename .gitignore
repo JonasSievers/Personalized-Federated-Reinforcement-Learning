@@ -9,4 +9,4 @@ outputs
 multirun
 
 # Large CSV files
-/data/Final_Energy_dataset.csv
+/data/1_processed/*.csv

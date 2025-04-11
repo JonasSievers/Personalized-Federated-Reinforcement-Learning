@@ -12,3 +12,4 @@ tensorboard
 matplotlib
 gurobipy
 scikit-learn
+seaborn

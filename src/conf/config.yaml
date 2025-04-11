@@ -11,8 +11,8 @@ name: LL_DQN_04
 output_path: outputs
 model_path: models
 data:
-  energy_dataset_path: data/Final_Energy_dataset.csv
-  price_dataset_path: data/price.csv
+  energy_dataset_path: data/1_processed/energy.csv
+  price_dataset_path: data/1_processed/price.csv
 use_forecast: false
 env:
   customer: [1]

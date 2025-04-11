@@ -7,9 +7,7 @@ class EnergyDataset(Dataset):
     def __init__(self, energy_path: str, price_path: str, forecast_size: int, customer: int, mode: str, time_feature: bool):
         csv_data = pd.read_csv(energy_path, header=0)
         csv_data['Date'] = pd.to_datetime(csv_data['Date'])
-        # Delete the 29th of February 2012
-        csv_data = csv_data[csv_data['Date'].dt.date !=pd.to_datetime('2012-02-29').date()].reset_index(drop=True)
-        csv_data['price'] = pd.read_csv(price_path, header=0) /100
+        csv_data['Price'] = pd.read_csv(price_path, header=0)['Price']
         csv_data.fillna(0, inplace=True)
         if mode == 'train':
             csv_data = csv_data.loc[0:17519].reset_index(drop=True)
@@ -17,10 +15,12 @@ class EnergyDataset(Dataset):
             csv_data = (csv_data.loc[17520:35039]).reset_index(drop=True)
         elif mode == 'test':
             csv_data = (csv_data.loc[35040:52559]).reset_index(drop=True)
-        self._data = pd.DataFrame({'net_load': csv_data[f'load_{customer}'] - csv_data[f'pv_{customer}']})
-        self._data['price'] = csv_data['price']
+        self._data = pd.DataFrame({'prosumption': csv_data[f'prosumption_{customer}'],
+                                   'load': csv_data[f'load_{customer}'],
+                                   'pv': csv_data[f'pv_{customer}'],
+                                   'price': csv_data['Price']})
         if time_feature:
-            dates = pd.to_datetime(csv_data['Date'])
+            dates = csv_data['Date']
             fractional_hours = dates.dt.hour + dates.dt.minute / 60.0
             hour_sin = np.sin(2 * np.pi * fractional_hours / 24)
             hour_cos = np.cos(2 * np.pi * fractional_hours / 24)
@@ -33,7 +33,7 @@ class EnergyDataset(Dataset):
         return len(self._data)-self._forecast_size
     
     def __getitem__(self, idx):
-        net_load = torch.tensor(self._data['net_load'].loc[idx:idx+self._forecast_size].values, dtype=torch.float32)
+        net_load = torch.tensor(self._data['prosumption'].loc[idx:idx+self._forecast_size].values, dtype=torch.float32)
         price = torch.tensor(self._data['price'].loc[idx:idx+self._forecast_size].values, dtype=torch.float32)
         if self._time_feature:
             hour_sin = torch.tensor(self._data['hour_sin'].loc[idx:idx+self._forecast_size].values, dtype=torch.float32)
@@ -43,7 +43,7 @@ class EnergyDataset(Dataset):
         return net_load, price
     
     def getAllLoad(self):
-        return torch.tensor(self._data['net_load'].values, dtype=torch.float32)
+        return torch.tensor(self._data['prosumption'].values, dtype=torch.float32)
     
     def getAllPrice(self):
         return torch.tensor(self._data['price'].values, dtype=torch.float32)
