@@ -10,3 +10,5 @@ hydra-core
 ipykernel
 tensorboard
 matplotlib
+gurobipy
+scikit-learn
