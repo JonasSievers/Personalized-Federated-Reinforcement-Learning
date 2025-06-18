@@ -28,7 +28,7 @@ class Learner():
         for customer in self._customers:
             datasets = utils.createDatasets(cfg=self._cfg, customer=customer)
             battery_cap = utils.calcBatteryCapacity(dataset=datasets[0])
-            observation_spec, action_spec = utils.createEnvSpecs(battery_cap, self._cfg)
+            observation_spec, action_spec = utils.createEnvSpecs(self._cfg)
             envs = utils.create_envs(customer, datasets, battery_cap, (observation_spec.clone(), action_spec.clone()), self._cfg, self._device)    
             value_net = MLP(in_features=observation_spec["observation"].shape[0],
                             out_features=self._cfg.algorithm.num_intervals_discretized, 
@@ -67,52 +67,51 @@ class Learner():
         for customer in self._customers:
             datasets = utils.createDatasets(cfg=self._cfg, customer=customer)
             battery_cap = utils.calcBatteryCapacity(dataset=datasets[0])
-            observation_spec, action_spec = utils.createEnvSpecs(battery_cap, self._cfg)
+            observation_spec, action_spec = utils.createEnvSpecs(self._cfg)
             envs = utils.create_envs(customer, datasets, battery_cap, (observation_spec.clone(), action_spec.clone()), self._cfg, self._device)    
 
-            if self._cfg.networks.description=='nn':
-                actor_net = CustomActorNet(observation_spec=observation_spec.clone(),
-                                           action_spec= action_spec.clone(),
-                                           fc_layers=self._cfg.networks.actor.fc_layers)
-                critic_net = CustomCriticNet(observation_spec=observation_spec.clone(),
-                                             action_spec= action_spec.clone(),
-                                             obs_fc_layers=self._cfg.networks.critic.obs_fc_layers,
-                                             joint_fc_layers=self._cfg.networks.critic.joint_fc_layers)
+            # if self._cfg.networks.description=='nn':
+            actor_net = CustomActorNet(observation_spec=observation_spec.clone(),
+                                        action_spec= action_spec.clone(),
+                                        fc_layers=self._cfg.algorithm.network.actor_fc_layers)
+            critic_net = CustomCriticNet(observation_spec=observation_spec.clone(),
+                                            action_spec= action_spec.clone(),
+                                            obs_fc_layers=self._cfg.algorithm.network.critic_obs_fc_layers,
+                                            joint_fc_layers=self._cfg.algorithm.network.critic_joint_fc_layers)
 
             policy_module = Actor(module=actor_net, in_keys=["observation"], out_keys=["action"])
             critic_module = TensorDictModule(module=critic_net, in_keys=["observation", "action"], out_keys=["state_action_value"])
 
             loss_module = DDPGLoss(actor_network=policy_module, value_network=critic_module, delay_actor=True, delay_value=True) 
-            loss_module.make_value_estimator(ValueEstimators.TD0, gamma=self._cfg.ddpg.td_gamma)
+            loss_module.make_value_estimator(ValueEstimators.TD0, gamma=self._cfg.algorithm.td_gamma)
 
-            target_updates = SoftUpdate(loss_module=loss_module, tau=self._cfg.ddpg.target_update_tau)
+            target_updates = SoftUpdate(loss_module=loss_module, tau=self._cfg.algorithm.target_update_tau)
 
-            actor_optimizer = torch.optim.Adam(loss_module.actor_network.parameters(), lr=self._cfg.networks.actor.learning_rate)
-            critic_optimizer = torch.optim.Adam(loss_module.value_network.parameters(), lr=self._cfg.networks.critic.learning_rate)
+            actor_optimizer = torch.optim.Adam(loss_module.actor_network.parameters(), lr=self._cfg.algorithm.network.actor_learning_rate)
+            critic_optimizer = torch.optim.Adam(loss_module.value_network.parameters(), lr=self._cfg.algorithm.network.critic_learning_rate)
 
             ou = OrnsteinUhlenbeckProcessModule(spec=policy_module.spec.clone(),
-                                                theta=self._cfg.networks.actor.ou_theta,
-                                                sigma=self._cfg.networks.actor.ou_sigma,
-                                                annealing_num_steps=self._cfg.ddpg.num_iterations*self._cfg.ddpg.data_collector_frames_per_batch//2)
+                                                theta=self._cfg.algorithm.ou_theta,
+                                                sigma=self._cfg.algorithm.ou_sigma,
+                                                annealing_num_steps=self._cfg.algorithm.num_iterations*self._cfg.algorithm.data_collector_frames_per_batch//2)
             exploration_policy_module = TensorDictSequential(policy_module, ou)
 
             collector = SyncDataCollector(create_env_fn=(utils.create_envs(customer, datasets, battery_cap, (observation_spec.clone(), action_spec.clone()), self._cfg, self._device)[0]),
                                           policy=exploration_policy_module, 
-                                          frames_per_batch=self._cfg.ddpg.data_collector_frames_per_batch, 
-                                          total_frames=self._cfg.ddpg.num_iterations*self._cfg.ddpg.data_collector_frames_per_batch,
-                                          init_random_frames=self._cfg.ddpg.data_collector_init_frames)
+                                          frames_per_batch=self._cfg.algorithm.data_collector_frames_per_batch, 
+                                          total_frames=self._cfg.algorithm.num_iterations*self._cfg.algorithm.data_collector_frames_per_batch)
 
-            buffer = ReplayBuffer(storage=LazyMemmapStorage(max_size=self._cfg.ddpg.replay_buffer_capacity),sampler=RandomSampler(), batch_size=self._cfg.ddpg.batch_size)
+            buffer = ReplayBuffer(storage=LazyMemmapStorage(max_size=self._cfg.algorithm.replay_buffer_capacity),sampler=RandomSampler(), batch_size=self._cfg.algorithm.batch_size)
 
             self._agents[customer] = {'loss': loss_module, 
                                                  'target_updates': target_updates, 
-                                                 'optimiser': {'loss_actor': actor_optimizer, 'loss_value': critic_optimizer},
+                                                 'optimisers': {'loss_actor': actor_optimizer, 'loss_value': critic_optimizer},
                                                  'collector': collector,
                                                  'buffer': buffer,
                                                  'envs': envs}
 
     def _loadAgent(self, customer):
-        return self._agents[customer]['loss'], self._agents[customer]['target_updates'], self._agents[customer]['optimiser'], self._agents[customer]['collector'], self._agents[customer]['buffer'], self._agents[customer]['envs']
+        return self._agents[customer]['loss'], self._agents[customer]['target_updates'], self._agents[customer]['optimisers'], self._agents[customer]['collector'], self._agents[customer]['buffer'], self._agents[customer]['envs']
     
     def train(self):
         pass

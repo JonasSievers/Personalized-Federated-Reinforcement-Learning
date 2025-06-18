@@ -7,7 +7,7 @@ class CustomActorNet(nn.Module):
     def __init__(self, observation_spec, action_spec, fc_layers=(400,300)):
         super(CustomActorNet, self).__init__()
         self._input_shape = observation_spec["observation"].shape[0]
-        self._output_shape = action_spec.shape
+        self._output_shape = action_spec.shape.numel()
         self._action_low = action_spec.low
         self._action_high = action_spec.high
         self._fc_layers = fc_layers
@@ -17,7 +17,7 @@ class CustomActorNet(nn.Module):
         for layer in self._fc_layers:
             self._layers.append(nn.Linear(input_shape, layer))
             input_shape = layer
-        self._final_layer = nn.Linear(input_shape, 1)
+        self._final_layer = nn.Linear(input_shape,  self._output_shape)
 
     def forward(self, observation):
         x = observation
@@ -25,8 +25,7 @@ class CustomActorNet(nn.Module):
             x = F.relu(layer(x))
         x = torch.tanh(self._final_layer(x))
 
-        output = self._action_low + (self._action_high - self._action_low) * 0.5 * (x + 1)
-        return output
+        return x
 
 
 # Critic Network
@@ -34,7 +33,7 @@ class CustomCriticNet(nn.Module):
     def __init__(self, observation_spec, action_spec, obs_fc_layers=(400,), joint_fc_layers=(300,)):
         super(CustomCriticNet, self).__init__()
         self._input_shape = observation_spec["observation"].shape[0]
-        self._joint_input_shape = obs_fc_layers[-1] + action_spec.shape[0]
+        self._joint_input_shape = obs_fc_layers[-1] + action_spec.shape.numel()
         self._output_shape = 1
         self._obs_fc_layers = obs_fc_layers
         self._joint_fc_layers = joint_fc_layers

@@ -16,7 +16,7 @@ class LocalLearner(Learner):
             pbar = tqdm.tqdm(total=self._cfg.algorithm.num_iterations, desc=f"Customer {customer}")
 
             # Setup agent
-            loss_module, target_updates, optimiser, collector, buffer, envs = self._loadAgent(customer=customer)
+            loss_module, target_updates, optimisers, collector, buffer, envs = self._loadAgent(customer=customer)
             exploration_policy_module = collector.policy
 
             # Train
@@ -34,14 +34,14 @@ class LocalLearner(Learner):
                             for loss_name in ["loss_actor", "loss_value"]:
                                 loss = loss_vals[loss_name]
                                 loss.backward()
-                                optimiser = optimiser[loss_name]
+                                optimiser = optimisers[loss_name]
                                 optimiser.step()
                                 optimiser.zero_grad()
                         case 'dqn':
                             loss = loss_module(sample)
                             loss['loss'].backward()
-                            optimiser.step()
-                            optimiser.zero_grad()
+                            optimisers.step()
+                            optimisers.zero_grad()
                     if (iteration+i) % self._cfg.algorithm.target_update_period == 0:
                             target_updates.step()
 
