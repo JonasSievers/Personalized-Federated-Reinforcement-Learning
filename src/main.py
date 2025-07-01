@@ -52,7 +52,7 @@ def main(cfg: HydraConfig):
             print('Running Local Learner')
             ll = LocalLearner(cfg=cfg, device=DEVICE)
             ll.train()
-            ll.test()
+            # ll.test()
         # case 'federated':
         #     print('Running Federated Learner')
         #     fl = FederatedLearner(cfg=cfg, device=DEVICE)

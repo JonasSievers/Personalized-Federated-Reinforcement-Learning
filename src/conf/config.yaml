@@ -7,7 +7,7 @@ defaults:
   - algorithm: ddpg
   - _self_
 
-name: LL_DDPG_01
+name: LL_DDPG_08
 output_path: outputs
 model_path: models
 data:
@@ -19,4 +19,5 @@ env:
   timeslots_per_day: 48
   forecast_horizon: 3
   init_charge: 0.0
+seed: 42
 device: cpu

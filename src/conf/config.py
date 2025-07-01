@@ -90,4 +90,5 @@ class HydraConfig:
     env: Env
     algorithm: Algorithm
     networks: Networks
+    seed: int
     device: str

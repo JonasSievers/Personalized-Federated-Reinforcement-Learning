@@ -2,8 +2,8 @@ defaults:
   - network: ddpg_nn
   - _self_
 description: ddpg
-num_iterations: 1_000
-eval_period: 50
+num_iterations: 1000
+eval_period: 100
 batch_size: 32
 td_gamma: 0.99
 target_update_period: 5
