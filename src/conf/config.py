@@ -22,7 +22,6 @@ class DQN_NN(Networks):
 @dataclass
 class Env:
     customer: List[int]
-    timeslots_per_day: int
     forecast_horizon: int
     init_charge: float
 

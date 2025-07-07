@@ -23,7 +23,6 @@ class LocalLearner(Learner):
 
             # Train
             for iteration, batch in enumerate(collector):
-                
                 current_frames = batch.numel()
                 exploration_policy_module[-1].step(current_frames)
                 buffer.extend(batch)
@@ -55,18 +54,22 @@ class LocalLearner(Learner):
                         case 'ddpg':
                             tensordict_result = eval_env.rollout(max_steps=100, policy=loss_module.actor_network)
                     final_cost = tensordict_result[-1]['next']['cost']
+                    pbar.set_postfix_str(final_cost.item())
                     eval[iteration+1] = final_cost.item()
             # Save evaluation metrics
             eval_df[customer] = eval
+
+            # Save evaluation DataFrame to CSV
+            eval_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/eval_metrics.csv", index=False)
 
             # Save the model
             match self._algorithm:
                 case 'ddpg':
                     model_path = f"{self._cfg.model_path}/{self._cfg.name}/actor_network_{customer}.pt"
                     torch.save(loss_module.actor_network.state_dict(), model_path)
+        pbar.close()
         
-        # Save evaluation DataFrame to CSV
-        eval_df.to_csv(f"{self._cfg.output_path}/{self._cfg.name}/eval_metrics.csv", index=False)
+        
 
     def test(self):
         actions_agg = {}

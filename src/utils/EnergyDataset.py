@@ -30,7 +30,7 @@ class EnergyDataset(Dataset):
         self._forecast_size = forecast_size
      
     def __len__(self):
-        return len(self._data)-self._forecast_size
+        return len(self._data)
     
     def __getitem__(self, idx):
         idx = int(idx)

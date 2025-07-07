@@ -12,6 +12,6 @@ ou_theta: 0.15
 ou_sigma: 0.2
 ou_annealing_num_steps: 1000
 data_collector_frames_per_batch: 50
-replay_buffer_capacity: 20_000
-train_iterations_per_frame: 32 
+replay_buffer_capacity: 20000
+train_iterations_per_frame: 32
 

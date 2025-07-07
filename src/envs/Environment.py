@@ -6,7 +6,7 @@ from tensordict import TensorDict, TensorDictBase
 from utils.EnergyDataset import EnergyDataset
 
 class BatteryScheduling(EnvBase):
-    def __init__(self, cfg, dataset, device):
+    def __init__(self, cfg, dataset, eval, device):
         super().__init__(device=cfg.device, batch_size=torch.Size([]))
         
         # Cfg
@@ -24,7 +24,10 @@ class BatteryScheduling(EnvBase):
 
         # Environment seed
         self.set_seed(cfg.seed)
-    
+
+        self._eval = eval
+
+
     def _set_seed(self, seed):
         rng = torch.manual_seed(seed)
         self.rng = rng
@@ -43,8 +46,12 @@ class BatteryScheduling(EnvBase):
         price_forecast = price_data[1:]
         time_feature = torch.tensor([time_data[0][0], time_data[0][1]])
 
-        if self._data_pointer + 1 >= len(self._dataset):
+        if self._eval:
+            self._data_pointer = 0
+            
+        if  (self._data_pointer + 1 > (len(self._dataset)-96)):
             self._data_pointer = torch.tensor(0, dtype=torch.int64)
+
 
 
         td_out = TensorDict(
@@ -104,13 +111,11 @@ class BatteryScheduling(EnvBase):
                 'cost': new_cost,
                 'params': params,
                 'reward': reward,
-                'done': ((step + 1) >= 48) or (self._data_pointer + 1 >= len(self._dataset)),
+                'done': ((step + 1) > 48) or (self._data_pointer + 1 > (len(self._dataset)-96)),
             },
             batch_size=td_in.shape,
             device=td_in.device,
         )
-        print(self._data_pointer)
-        print(td_out['done'])
         return td_out
     
     def _make_params(self):

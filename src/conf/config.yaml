@@ -7,7 +7,7 @@ defaults:
   - algorithm: ddpg
   - _self_
 
-name: LL_DDPG_08
+name: LL_DDPG_FC_10
 output_path: outputs
 model_path: models
 data:
@@ -15,9 +15,8 @@ data:
   price_dataset_path: data/1_processed/price.csv
 use_forecast: false
 env:
-  customer: [1]
-  timeslots_per_day: 48
-  forecast_horizon: 3
+  customer: [1,2,5]
+  forecast_horizon: 10
   init_charge: 0.0
 seed: 42
 device: cpu

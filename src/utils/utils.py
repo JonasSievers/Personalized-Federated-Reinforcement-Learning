@@ -21,18 +21,20 @@ def make_specs(cfg):
 def make_env(cfg, datasets, device):
     return [TransformedEnv(env=BatteryScheduling(cfg=cfg,
                                                  dataset=dataset,
+                                                 eval = eval,
                                                  device=device),
                             transform=Compose(InitTracker(),
-                                            #   CustomActionScaler(max_action=dataset.getBatteryCapacity()/4),
-                                              UnsqueezeTransform(dim=-1,
+                                              CustomActionScaler(max_action=dataset.getBatteryCapacity()/4),
+                                             
+                                            # CustomObservationStandardization(battery_cap=dataset.getBatteryCapacity()),
+                                             UnsqueezeTransform(dim=-1,
                                                                  in_keys=['soe', 'prosumption', 'price', 'cost'],
                                                                  in_keys_inv=['soe', 'prosumption', 'price', 'cost']),
-                                            # CustomObservationStandardization(battery_cap=dataset.getBatteryCapacity()),
                                             CatTensors(dim=-1,
-                                                         in_keys=['time_feature', 'soe', 'prosumption','price'],
+                                                         in_keys=['time_feature', 'soe', 'prosumption','prosumption_forecast','price','price_forecast'],
                                                          out_key='observation',
                                                          del_keys=False)
-                                            )) for dataset in datasets]
+                                            )) for dataset, eval in zip(datasets,[False,True,True])]
 
 def make_datasets(cfg, customer):
     ds_arr = [EnergyDataset(energy_path=cfg.data.energy_dataset_path, 

@@ -66,8 +66,8 @@ class Learner():
     def _setupDDPG(self):
         for customer in self._customers:
             datasets = make_datasets(cfg=self._cfg, customer=customer)
-            envs = make_env(cfg=self._cfg, datasets=datasets, device=self._device)    
-
+            envs = make_env(cfg=self._cfg, datasets=datasets, device=self._device)
+            
             policy_net = MLP(
                 in_features=envs[0].observation_spec['observation'].shape[-1],
                 out_features=envs[0].action_spec.shape.numel(),

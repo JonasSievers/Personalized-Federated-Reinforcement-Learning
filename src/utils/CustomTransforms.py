@@ -1,5 +1,6 @@
 import torch
 from torchrl.envs import Transform
+from tensordict import TensorDict, TensorDictBase
 
 
 """
@@ -49,7 +50,9 @@ class CustomObservationStandardization(Transform):
     def _call(self, td_in):
         soe = td_in['soe']
         prosumption = td_in['prosumption']
+        prosumption_forecast = td_in['prosumption_forecast']
         price = td_in['price']
+        price_forecast = td_in['price_forecast']
 
         if not self._eval_mode:
             self.rms_prosumption.update(prosumption)
@@ -57,9 +60,19 @@ class CustomObservationStandardization(Transform):
         
         soe_norm = soe/self.battery_cap
         prosumption_norm = self.rms_prosumption.normalize(prosumption)
+        prosumption_forecast_norm = self.rms_prosumption.normalize(prosumption_forecast)
         price_norm = self.rms_price.normalize(price)
+        price_forecast_norm = self.rms_price.normalize(price_forecast)
+
+        td_out = TensorDict({
+            'soe': soe_norm,
+            'prosumption': prosumption_norm,
+            'prosumption_forecast': price_forecast_norm,
+            'price': price_norm,
+            'price_forecast': prosumption_forecast_norm
+        })
     
-        return torch.cat((torch.tensor([soe_norm]),prosumption_norm,price_norm))
+        return td_in.update(td_out)
     
     def _reset(self, tensordict, tensordict_reset):
         tensordict_reset = self._call(tensordict_reset)
