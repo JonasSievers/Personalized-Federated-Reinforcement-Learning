@@ -3,20 +3,38 @@ hydra:
     dir: ${output_path}/${name}
 
 defaults:
-  - mode: local
-  - algorithm: dqn
+  - component: local
   - _self_
 
-name: LL_DQN_04
-output_path: outputs
-model_path: models
-data:
-  energy_dataset_path: data/1_processed/energy.csv
-  price_dataset_path: data/1_processed/price.csv
+name: LL_00
+output_path: ../output/${component.name}/${mode}/${building_id}/${name}
+model_path: ../model/${component.name}/${mode}/${building_id}/${name}
+data_path: ../data/1_processed
+building_id: 13
+mode: train
 use_forecast: false
-env:
-  customer: [1]
-  timeslots_per_day: 48
-  forecast_horizon: 3
-  init_charge: 0.0
+dataset:
+  sliding_window_size: 1344
+  sliding_window_offset: 1344
+  forecast_horizon: 32
+ddpg:
+  policy:
+    num_cells: [400,300]
+  ou:
+    annealing_num_steps: 1000000
+    n_steps_annealing: 1000000
+  critic:
+    num_cells: [400,300]
+  collector_frames_per_batch: 100
+  replay_buffer_size: 100000
+  batch_size: 128
+  delay_actor: False
+  delay_value: True
+  gamma: 0.99
+  tau: 0.005
+  lr:
+    actor: 1e-4
+    value: 1e-3
+  eval_interval: 100
+seed: 42
 device: cpu

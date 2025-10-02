@@ -1,6 +1,0 @@
-description: ddpg_nn
-actor_fc_layers: [400,300]
-actor_learning_rate: 1e-4
-critic_obs_fc_layers: [400]
-critic_joint_fc_layers: [300]
-critic_learning_rate: 1e-3
