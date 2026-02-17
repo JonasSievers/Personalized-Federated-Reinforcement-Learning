@@ -1,6 +1,6 @@
 hydra:
   run:
-    dir: ${output_path}/${name}
+    dir: ${output_path}
 
 defaults:
   - component: local
@@ -12,10 +12,9 @@ model_path: ../model/${component.name}/${mode}/${building_id}/${name}
 data_path: ../data/1_processed
 building_id: 13
 mode: train
-use_forecast: false
 dataset:
-  sliding_window_size: 1344
-  sliding_window_offset: 1344
+  sliding_window_size: 96
+  sliding_window_offset: 48
   forecast_horizon: 32
 ddpg:
   policy:
@@ -35,6 +34,6 @@ ddpg:
   lr:
     actor: 1e-4
     value: 1e-3
-  eval_interval: 100
+  eval_interval: 10
 seed: 42
 device: cpu

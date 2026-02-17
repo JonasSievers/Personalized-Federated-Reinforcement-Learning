@@ -19,8 +19,8 @@ class OnlineDataset(Dataset):
 
         # 1038 days for ddpg training (1037 clean days)
         if mode == 'train':
-            selected_data = data[0:49824]
-            max_data = torch.tensor((49824-forecast_size)/sliding_window_offset).int() - overlap_correction
+            selected_data = data[0:12096]
+            max_data = torch.tensor((12096-forecast_size)/sliding_window_offset).int() - overlap_correction
         # 29 days for validation (28 clean days)
         elif mode == 'val':
             selected_data = data[49824:51216]

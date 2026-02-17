@@ -12,6 +12,7 @@ class LocalLearner(Learner):
         super().__init__(cfg, device)
         
     def train(self):
+        logger.info('Start training DDPG agent')
         exploration_policy = self.collector.policy
 
         best_iteration = TensorDict({
